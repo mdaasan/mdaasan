@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Bridge Flashloan</title>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'SF Pro Display', 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Navigation Styles */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 215, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .nav-container:hover {
+            background: rgba(15, 15, 15, 0.95);
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 3rem;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 0.6rem 1.2rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.15), transparent 70%);
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: -1;
+        }
+
+        .nav-links a:hover {
+            color: #FFD700;
+            transform: translateY(-2px);
+        }
+
+        .nav-links a:hover::before {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.7);
+            background: linear-gradient(135deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.95));
+            padding: 3.5rem 2.5rem 2.5rem;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            z-index: 1001;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            display: none;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        .modal.active {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .modal-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 215, 0, 0.1);
+            border: none;
+            color: #FFD700;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 215, 0, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: inherit;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+            font-size: 1.8rem; /* تقليل حجم العنوان */
+        }
+
+
+        .modal-content {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            height: calc(100% - 80px); /* ترك مساحة للعنوان */
+            overflow-y: auto; /* إضافة شريط التمرير */
+            padding-right: 15px; /* مساحة للتمرير */
+        }
+
+        /* تنسيق شريط التمرير */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 215, 0, 0.3);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 215, 0, 0.5);
+        }
+
+        .modal-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+        }
+
+        .modal-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .modal-section h3 {
+            font-size: 1.2rem; /* تقليل حجم العناوين الفرعية */
+            margin-bottom: 0.8rem;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 215, 0, 0.3);
+            transform: rotate(90deg) scale(1.1);
+        }
+
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            font-size: 1rem; /* تقليل حجم النص */
+            margin-bottom: 0.6rem;
+        }
+
+        .feature-list li::before {
+            content: '•';
+            color: #FFD700;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        /* Background Effects */
+        .glow-overlay {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 165, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+            filter: blur(100px);
+            z-index: 1;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            opacity: 0.5;
+        }
+
+        /* Content Styles */
+        .container {
+            position: relative;
+            z-index: 3;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 8rem 2rem 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        h1 {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, #ffffff 0%, #FFD700 50%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            margin-bottom: 4rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 800px;
+            font-weight: 300;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1.4rem 3.5rem;
+            font-size: 1.3rem;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            text-decoration: none;
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 5rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(255, 215, 0, 0.2);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(255, 215, 0, 0.3);
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .feature-card {
+            background: rgba(20, 20, 20, 0.6);
+            padding: 3rem;
+            border-radius: 24px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-card h3 {
+            color: #FFD700;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            text-align: center;
+            font-weight: 600;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .feature-card p {
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            line-height: 1.8;
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .modal.animate {
+            animation: modalFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @media (max-width: 768px) {
+            .modal {
+                height: 80vh; /* ارتفاع نسبي على الشاشات الصغيرة */
+                max-width: 90%;
+            }
+            .features {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+            .subtitle {
+                font-size: 1.2rem;
+                padding: 0 1rem;
+            }
+            .nav-links {
+                gap: 1.5rem;
+            }
+            .nav-links a {
+                font-size: 1rem;
+                padding: 0.5rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-container">
+        <div class="nav-content">
+            <a href="index.html" class="logo-text">Meta Bridge</a>
+            <div class="nav-links">
+                <a href="about.html">About Meta Bridge</a>
+                <a href="tutorials.html">Tutorials</a>
+                <a href="contact.html">Contact Us</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="glow-overlay"></div>
+    <div id="particles-js"></div>
+    
+    <div class="container">
+        <h1>Meta Bridge Flashloan</h1>
+        <p class="subtitle">Experience the future of DeFi with instant liquidity solutions.<br>
+            Secure, efficient, and lightning-fast flash loans at your fingertips.</p>
+        <a href="#" class="cta-button">Launch App</a>
+        
+        <div class="features">
+            <div class="feature-card" onclick="openModal('liquidity')">
+                <h3>Instant Liquidity</h3>
+                <p>Access large amounts of liquidity instantly without collateral requirements. Fast, seamless, and efficient.</p>
+            </div>
+            <div class="feature-card" onclick="openModal('security')">
+                <h3>Security First</h3>
+                <p>Built with robust security measures and audited smart contracts. Your assets, your safety, our priority.</p>
+            </div>
+            <div class="feature-card" onclick="openModal('fees')">
+                <h3>Low Fees</h3>
+                <p>Competitive fee structure designed for maximum efficiency. Transparent pricing, no hidden costs.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" onclick="closeModal()"></div>
+
+    <!-- Instant Liquidity Modal -->
+    <div class="modal" id="liquidityModal">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <h2 class="modal-header">Instant Liquidity</h2>
+        <div class="modal-content">
+            <div class="modal-section">
+                <h3>Unleash DeFi Possibilities</h3>
+                <p>Access instant liquidity for your DeFi strategies without the need for collateral. Our advanced flash loan protocol enables you to borrow significant amounts for immediate use within the same transaction.</p>
+            </div>
+            <div class="modal-section">
+                <h3>Key Features</h3>
+                <ul class="feature-list">
+                    <li>Instant access to large liquidity pools</li>
+                    <li>No collateral requirements</li>
+                    <li>Multiple token pairs supported</li>
+                    <li>Cross-chain compatibility</li>
+                    <li>Smart contract automation</ul>
+                    </div>
+                    <div class="modal-section">
+                        <h3>Use Cases</h3>
+                        <ul class="feature-list">
+                            <li>Arbitrage trading</li>
+                            <li>Yield farming optimization</li>
+                            <li>Debt refinancing</li>
+                            <li>Collateral swapping</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Security Modal -->
+            <div class="modal" id="securityModal">
+                <button class="modal-close" onclick="closeModal()">×</button>
+                <h2 class="modal-header">Security First</h2>
+                <div class="modal-content">
+                    <div class="modal-section">
+                        <h3>Enterprise-Grade Security</h3>
+                        <p>Your security is our top priority. We've implemented multiple layers of protection to ensure your assets and transactions remain safe at all times.</p>
+                    </div>
+                    <div class="modal-section">
+                        <h3>Security Measures</h3>
+                        <ul class="feature-list">
+                            <li>Multi-signature validation</li>
+                            <li>Real-time transaction monitoring</li>
+                            <li>Automated security audits</li>
+                            <li>Smart contract insurance</li>
+                            <li>24/7 security team monitoring</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h3>Certifications & Audits</h3>
+                        <ul class="feature-list">
+                            <li>CertiK security certification</li>
+                            <li>Quarterly security audits</li>
+                            <li>Bug bounty program</li>
+                            <li>Open-source code verification</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Fees Modal -->
+            <div class="modal" id="feesModal">
+                <button class="modal-close" onclick="closeModal()">×</button>
+                <h2 class="modal-header">Low Fees</h2>
+                <div class="modal-content">
+                    <div class="modal-section">
+                        <h3>Transparent Pricing</h3>
+                        <p>We believe in complete transparency with our fee structure. No hidden costs, no surprises - just straightforward pricing that helps you maximize your returns.</p>
+                    </div>
+                    <div class="modal-section">
+                        <h3>Fee Structure</h3>
+                        <ul class="feature-list">
+                            <li>Flash loan fee: 0.09%</li>
+                            <li>No platform subscription fees</li>
+                            <li>Volume-based discounts available</li>
+                            <li>Gas optimization features</li>
+                        </ul>
+                    </div>
+                    <div class="modal-section">
+                        <h3>Cost Benefits</h3>
+                        <ul class="feature-list">
+                            <li>Competitive market rates</li>
+                            <li>Bulk transaction discounts</li>
+                            <li>Loyalty rewards program</li>
+                            <li>Fee-sharing for liquidity providers</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        
+            <!-- Scripts -->
+            <script>
+                // Particles.js Configuration
+                document.addEventListener('DOMContentLoaded', function() {
+                    if(typeof particlesJS !== 'undefined') {
+                        particlesJS('particles-js',
+                        {
+                            "particles": {
+                                "number": {
+                                    "value": 100,
+                                    "density": {
+                                        "enable": true,
+                                        "value_area": 800
+                                    }
+                                },
+                                "color": {
+                                    "value": "#FFD700"
+                                },
+                                "shape": {
+                                    "type": "circle"
+                                },
+                                "opacity": {
+                                    "value": 0.4,
+                                    "random": true,
+                                    "anim": {
+                                        "enable": true,
+                                        "speed": 1,
+                                        "opacity_min": 0.1,
+                                        "sync": false
+                                    }
+                                },
+                                "size": {
+                                    "value": 3,
+                                    "random": true,
+                                    "anim": {
+                                        "enable": true,
+                                        "speed": 2,
+                                        "size_min": 0.1,
+                                        "sync": false
+                                    }
+                                },
+                                "line_linked": {
+                                    "enable": true,
+                                    "distance": 150,
+                                    "color": "#FFD700",
+                                    "opacity": 0.3,
+                                    "width": 1
+                                },
+                                "move": {
+                                    "enable": true,
+                                    "speed": 1.5,
+                                    "direction": "none",
+                                    "random": true,
+                                    "straight": false,
+                                    "out_mode": "out",
+                                    "bounce": false,
+                                    "attract": {
+                                        "enable": true,
+                                        "rotateX": 600,
+                                        "rotateY": 1200
+                                    }
+                                }
+                            },
+                            "interactivity": {
+                                "detect_on": "canvas",
+                                "events": {
+                                    "onhover": {
+                                        "enable": true,
+                                        "mode": "repulse"
+                                    },
+                                    "onclick": {
+                                        "enable": true,
+                                        "mode": "push"
+                                    },
+                                    "resize": true
+                                },
+                                "modes": {
+                                    "repulse": {
+                                        "distance": 100,
+                                        "duration": 0.4
+                                    }
+                                }
+                            },
+                            "retina_detect": true
+                        });
+                    }
+                });
+        
+                // Modal Functions
+                function openModal(type) {
+                    const overlay = document.querySelector('.modal-overlay');
+                    const modal = document.getElementById(`${type}Modal`);
+                    
+                    overlay.classList.add('active');
+                    modal.style.display = 'block';
+                    
+                    // Slight delay for better animation effect
+                    setTimeout(() => {
+                        modal.classList.add('active', 'animate');
+                    }, 10);
+                }
+        
+                function closeModal() {
+                    const overlay = document.querySelector('.modal-overlay');
+                    const modals = document.querySelectorAll('.modal');
+                    
+                    overlay.classList.remove('active');
+                    modals.forEach(modal => {
+                        modal.classList.remove('active', 'animate');
+                        setTimeout(() => {
+                            modal.style.display = 'none';
+                        }, 300);
+                    });
+                }
+        
+                // Close modal with Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        closeModal();
+                    }
+                });
+            </script>
+        </body>
+        </html>
